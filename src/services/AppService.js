@@ -28,12 +28,15 @@ class AppService{
                 const k_input=k.inputs[j].toLowerCase();//console.log(k_input,input)
                 if(k_input===input){
                     return k.outputs[Math.floor(Math.random()*k.outputs.length)];
-                }else if(input.includes(k_input)){
+                }else if(input.includes(k_input)||(input.length>3&&k_input.includes(input))){
                     possibleMatch=i;
                 }
             }
         }
-        if(possibleMatch>-1)return AppService.bot.knowledge[possibleMatch].outputs[Math.floor(Math.random()*AppService.bot.knowledge[possibleMatch].outputs.length)];
+        if(possibleMatch>-1){
+            const k=AppService.bot.knowledge[possibleMatch];
+            return "If you mean '"+k.inputs[0]+"' then: "+k.outputs[Math.floor(Math.random()*k.outputs.length)];
+        }
         else return AppService.bot.fallBacks[Math.floor(Math.random()*AppService.bot.fallBacks.length)]
     }
     static handleCommand(input){
@@ -134,63 +137,6 @@ class AppService{
     }
 
     //helpers
-    //text to image
-    static textToImage(txt){
-        const can=document.createElement("canvas");
-        const cc=can.getContext('2d');
-        cc.imageSmoothingEnabled=false;
-        const charCodes=txt.split('').map((char,i)=>{
-            return char.charCodeAt(0);
-        });
-        const imgSize=Math.ceil(Math.sqrt(charCodes.length/3));
-        can.width=imgSize;can.height=imgSize;//let test=[];
-        for(let y=0;y<can.height;y++){
-            for(let x=0;x<can.width;x++){
-                const idx=(x+y*can.width)*3;
-                const chars=[];
-                for(let i=0;i<3;i++){
-                    if(charCodes[idx+i])chars.push(charCodes[idx+i]);
-                    else chars.push(null);
-                }
-                if(chars.every(char=>char===null))break;
-                const color=chars.map((char,j)=>char!=null?char:0);//test.push(...color)
-                cc.fillStyle=`rgba(${color[0]},${color[1]},${color[2]},${1})`;
-                cc.fillRect(x,y,1,1);
-            }   
-        }
-        const imgUrl=can.toDataURL();//console.log(test)
-        can.remove();
-        return imgUrl;
-    }
-    //image to text
-    static imageToText(imgUrl){
-        return new Promise((resolve,reject)=>{
-            const img=new Image();
-            img.onload=()=>{
-                const can=document.createElement("canvas");
-                const cc=can.getContext('2d');
-                cc.imageSmoothingEnabled=false;
-                can.width=img.width;can.height=img.height;
-                cc.drawImage(img,0,0,can.width,can.height);
-                const imgData=cc.getImageData(0,0,can.width,can.height);//console.log(imgData.data)
-                let text="";
-                for(let row=0;row<can.height;row++){
-                    for(let col=0;col<can.width;col++){
-                        const index=(row*can.width+col)*4;
-                        const r=imgData.data[index];
-                        const g=imgData.data[index+1];
-                        const b=imgData.data[index+2];
-                        const a=imgData.data[index+3];
-                        const rgb=[r,g,b];
-                        text+=rgb.map((val,i)=>String.fromCharCode(val)).join("");
-                    }
-                }
-                can.remove();
-                resolve(text);
-            }
-            img.src=imgUrl;
-        });
-    }
 
 }
 
